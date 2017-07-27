@@ -1,0 +1,210 @@
+---
+title: "A Bayesian Model of Memory for text"
+author: |
+  | Mark Andrews
+  | Psychology Department, Nottingham Trent University
+  | 
+  | \faEnvelopeO\  ```mark.andrews@ntu.ac.uk```
+  | \faTwitter\ ```@xmjandrews```
+  | \faGithub\ ```https://github.com/lawsofthought/cogsci2017```
+date: "July 28, 2017"
+fontsize: 10pt
+output:
+ beamer_presentation:
+  keep_tex: true
+  fonttheme: "serif"
+  includes:
+   in_header: slides_preamble.tex
+bibliography: refs.bib
+csl: apa.csl
+---
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(dplyr)
+library(tidyr)
+library(tidytext)
+library(ggplot2)
+library(knitr)
+library(pander)
+```
+
+# Memory for text
+
+- The seminal study on memory for text is usually attributed to
+@bartlett:remembering. 
+- From this, and schema based
+accounts of text memory [see, e.g., @bower:scripts],
+there has been something close to a consensus on the broad or general
+characteristics of human text memory.
+- According to this general account --- which we can summarize by the following schematic:
+\begin{center}
+\begin{tikzpicture}[thick]
+\tikzstyle{lables}=[font=\footnotesize]
+\node (knowledge) at (0,2) [inner sep=0pt,minimum size=3mm,circle,draw] {};
+\node (representation) at (0,1) [inner sep=0pt,minimum size=3mm,circle,draw] {};
+\node (text) at (2,1) [inner sep=0pt,minimum size=3mm,circle,draw] {};
+\node (memory) at (-2,1) [inner sep=0pt,minimum size=3mm,circle,draw] {};
+\draw [->] (knowledge) -- (representation);
+\draw [->] (text) -- (representation);
+\draw [->] (representation) -- (memory);
+\node[lables] (representationlabel) at (0,.5) {Representation};
+\node[lables] (knowledgelabel) at (0,2.5) {Knowledge};
+\node[lables] (textlabel) at (2.7,1) {Text};
+\node[lables] (memorylabel) at (-2.9,1) {Memory};
+\end{tikzpicture}
+\end{center}
+--- the recognition or recall of items in a text is based on querying a
+representation of the text that is built up on the basis of background
+knowledge and experience.
+
+# Probabilistic account of memory for text
+
+- We begin with the assumption that our background knowledge that is relevant for
+our memory of text is knowledge of the distributional statistics. 
+- Given a probabilistic language model, we may use Bayes's rule to infer the statistical patterns inherent in any given text.  
+- We may then predict, via posterior predictive inference, the words are
+and are not typical of this inferred statistical representation. 
+- As such, this provides a computational description of the previous schematic, i.e.,
+\begin{center}
+\begin{tikzpicture}[thick,node distance=6mm]
+\tikzstyle{lables}=[font=\footnotesize,text width=15em,text centered]
+\node (knowledge) at (0,2) [inner sep=0pt,minimum size=3mm,circle,draw] {};
+\node (representation) at (0,1) [inner sep=0pt,minimum size=3mm,circle,draw] {};
+\node (text) at (2,1) [inner sep=0pt,minimum size=3mm,circle,draw] {};
+\node (memory) at (-2.4,1) [inner sep=0pt,minimum size=3mm,circle,draw] {};
+\draw [->] (knowledge) -- (representation) node[red,right,midway] {{\tiny Bayes's rule}};
+\draw [->] (text) -- (representation);
+\draw [->] (representation) -- (memory) node[red,above,midway] {{\tiny posterior prediction}};
+\node[lables] (representationlabel) at (0,.3) {Representation  \\ ({\scriptsize statistical patterns inherent in \emph{Text}})};
+\node[lables] (knowledgelabel) [above of=knowledge] {Knowledge \\ ({\scriptsize statistical patterns in language})};
+\node[lables, text width=3em] (textlabel) at (2.7,1) {Text};
+\node[lables, node distance=8mm, text width=3em] (memorylabel) [left of=memory] {Memory};
+\end{tikzpicture}
+\end{center}
+
+# Probabilistic topic models
+
+- *Probabilistic topic models* [see, e.g., @griffiths:psychrev] have
+proved effective in capturing the statistical patterns that characterize coarse-grained ``discourse topics''.
+- Topic models model each word in a text as a sample from one of
+many underlying probability distributions over a vocabulary. 
+- For example, here is a sample of 6 topics from an inferred model: 
+
+\centering\small 
+\begin{tabular}{cccccc}
+theatre &    music &  league & prison & rate & pub           \\
+stage &      band &   cup & years & cent & guinness          \\
+arts &       rock &   season & sentence & inflation & beer \\
+play &       song &   team & jail & recession & drink        \\
+dance &      record & game & home & recovery & bar           \\
+opera &      pop &    match & prisoner & economy & drinking  \\
+cast &       dance &  division & serving & cut & alcohol     \\
+\end{tabular}\normalsize 
+
+- In this study, we used a *Hierarchical Dirichlet process topic model* (\hdpmm), which is a non-parametric probabilistic topic model.
+
+# Inference and predictions in topic models
+
+- Given this model, we obtain a formal model of background knowledge, text representation, and recall or recognition memory:
+    - *Background knowledge*: From a corpus of example texts, we can infer the posterior distribution over the topics.
+    - *Text representation*: For any given text, we can infer how well it is characterized by each inferred topic.
+    - *Memory*: Given the text representation, we can then predict which words are typical or expected on the basis of that inferred representation.
+- More formally, having inferred topics,
+given a new text $\wnew$, we infer the posterior probability over $\pinew$, which is the probability distribution over the discourse topics in $\wnew$. We then use the posterior predictive distribution to infer the words that are typical of the topics inherent in $\wnew$: 
+\[
+	\Prob{\wjinew \given \wnew,\data} = \int \Prob{\wjinew \given \pinew, \data}\Prob{\pinew \given \wnew, \data} d\pinew
+\]
+
+# Training and test corpus
+
+- As our training corpus, we used the British National Corpus (\bnc).
+- From the entire \bnc, we extracted approximately 200,000 texts, each with between 250 and 500 words.
+- This gave a corpus of approximately 80m word tokens, and 50K word types. 
+- We randomly selected exactly 50 texts from the training corpus, and removed them. 
+- Having inferred the topics on the basis of the training corpus, we calculated the posterior predictive distribution for each of the 50 test texts.
+
+# Comparison models 
+
+- We compare to predictions made by two \emph{associative} models:
+    1. From the bnc, we calculate co-occurrence probability of two words, $w_k$ and $w_l$ as follows:
+    $$\Probc{w_k \given w_l} = \frac{\Probc{w_k, w_l}}{\Probc{w_l}},$$
+    2. Using the *small world of word* association norms, we calculate conditional probability of word $w_k$ given $w_l$ with 
+      $$
+      \Proba{w_k \given w_l} = \frac{A_{kl}}{\sum_{i=1}^V A_{il}},
+      $$
+      where $A_{kl}$ indicates frequency that word $w_k$ is stated as associated with word $w_l$.
+- Given a text $\wnew = w_{j1}, w_{j2} \ldots w_{j n_j}$, these models' predictions are:
+$$
+\Probc{w_k \given \wnew} =\frac{1}{n_j} \sum_{i=1}^{n_{j}} \Probc{w_k \given w_{ji}},\quad
+	\Proba{w_k \given \wnew} =\frac{1}{n_j} \sum_{i=1}^{n_{j}} \Proba{w_k \given w_{ji}},
+$$  
+
+
+
+# Experiment 
+
+- 216 people (113 female, 103 male) participated in the experiment.
+- Each participant read three randomly chosen texts (from the set of 50).
+- Their memory was tested with either a recall or a recognition test.
+```{r, out.width = "220px", fig.align="center"}
+knitr::include_graphics("task_diagram.pdf")
+```
+
+# Recognition memory: Topic model
+```{r, out.width = "320px", fig.align="center"}
+knitr::include_graphics("topic-recognition-plot.pdf")
+```
+
+# Recognition memory: Cooccurrence model
+```{r, out.width = "320px", fig.align="center"}
+knitr::include_graphics("cooccurrence-recognition-plot.pdf")
+```
+
+# Recognition memory: Association model
+```{r, out.width = "320px", fig.align="center"}
+knitr::include_graphics("association-recognition-plot.pdf")
+```
+
+
+# Recognition memory analysis
+
+- We analysed the predictions of each of the three models using multilevel logistic regression.
+- For each model, we modelled the log-odds of recognizing as a linear function of the log of the model's predictions. 
+- In each case, this linear function varied randomly by participant, and by text, and had random intercept for each word type. 
+- Each model was evaluated using its *deviance information criterion* (\dic), which is a measure of out-of-sample generalization:
+```{r}
+dic <- c(5232,5259,5320,5352)
+names(dic) <- c('Topic model', 'Cooccurrence model', 'Association model', 'Null model')
+pander(dic)
+```
+
+
+# Recall memory analysis
+
+- We analysed the predictions of each of the three models using multilevel multinomial logistic regression.
+- For each model, we modelled the probability of recalling a word a probability mass function over the vocabulary that is linear function of the log of the model's predictions. 
+- In each case, this linear function varied randomly by participant, and by text. 
+- As in the recognition analysis, each model was evaluated using its \dic:
+```{r}
+dic <- c(23798, 26324, 26825)
+names(dic) <- c('Topic model', 'Cooccurrence model', 'Association model')
+pander(dic)
+```
+
+# Conclusion
+
+- We have proposed a Bayesian account of how we form memories for
+spoken and written language. 
+- This account models how we use our background
+knowledge to form memories as a process of Bayesian inference of the
+statistical patterns that are inherent in each text, followed by posterior
+predictive inference of the words that are typical of those inferred patterns.
+- We tested these predictions in a
+behavioural experiment with 216 participants. 
+- The results of the analysis from
+both the recognition and recall data provided strong evidence in favour
+of the Bayesian model relative to non-trivial alternative models.
+
+
+# References
