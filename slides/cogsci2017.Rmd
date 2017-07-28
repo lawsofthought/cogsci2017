@@ -1,5 +1,5 @@
 ---
-title: "A Bayesian Model of Memory for text"
+title: "A Bayesian Model of Memory for Text"
 author: |
   | Mark Andrews
   | Psychology Department, Nottingham Trent University
@@ -127,8 +127,9 @@ given a new text $\wnew$, we infer the posterior probability over $\pinew$, whic
 # Comparison models 
 
 - We compare to predictions made by two \emph{associative} models:
-    1. From the bnc, we calculate co-occurrence probability of two words, $w_k$ and $w_l$ as follows:
+    1. From the \bnc, we calculate the conditional probability of $w_k$ and $w_l$ as follows:
     $$\Probc{w_k \given w_l} = \frac{\Probc{w_k, w_l}}{\Probc{w_l}},$$
+    where $\Probc{w_k, w_l}$ is the co-occurrence probability of $w_k$ and $w_l$.
     2. Using the *small world of word* association norms, we calculate conditional probability of word $w_k$ given $w_l$ with 
       $$
       \Proba{w_k \given w_l} = \frac{A_{kl}}{\sum_{i=1}^V A_{il}},
@@ -170,7 +171,7 @@ knitr::include_graphics("association-recognition-plot.pdf")
 # Recognition memory analysis
 
 - We analysed the predictions of each of the three models using multilevel logistic regression.
-- For each model, we modelled the log-odds of recognizing as a linear function of the log of the model's predictions. 
+- For each model, we modelled the log-odds of recognizing as a (normalized exponential function of a) linear function of the log of the model's predictions. 
 - In each case, this linear function varied randomly by participant, and by text, and had random intercept for each word type. 
 - Each model was evaluated using its *deviance information criterion* (\dic), which is a measure of out-of-sample generalization:
 ```{r}
